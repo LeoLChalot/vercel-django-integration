@@ -10,54 +10,34 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from pathlib import Path
-import vercel_blob
-from mysite.config import AppSettings
 import os
-from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+import dj_database_url
+
+from mysite.config import AppSettings
 
 # Charger les paramètres
 config = AppSettings()
-
-# print(config.app_name)
+# DEBUG = config.debug
 # print(config.database_url)
-# print(config.database_engine)
-# print(config.pghost)
-# print(config.database_port)
-# print(config.pguser)
-# print(config.pgpassword)
-# print(config.pgdatabase)
-# print(config.blob_read_write_token)
 
 # Build paths inside the project like this: BASE_DIR / "subdir".
 BASE_DIR: Path = Path(__file__).resolve().parent.parent.parent
-# print(BASE_DIR)
-# print(vercel_blob.list())
-
-
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 
-ALLOWED_HOSTS: list[str] = [
-    "vercel-django-ashen.vercel.app",
-    ".vercel.app",
-    "now.sh",
-    "127.0.0.1",
-    "localhost",
-]
+ALLOWED_HOSTS: list[str] = ["localhost", "127.0.0.1", "[::1]", "now.sh", ".vercel.app"]
 
+print(ALLOWED_HOSTS)
 # Application definition
 
 INSTALLED_APPS: list[str] = [
-    "whitenoise.runserver_nostatic",
     # This project
     "website",
-    "custom_media",
     "custom_user",
     # Wagtail CRX (CodeRed Extensions)
     "coderedcms",
@@ -86,6 +66,7 @@ INSTALLED_APPS: list[str] = [
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
+    "whitenoise.runserver_nostatic",
     "django.contrib.staticfiles",
     "django.contrib.sitemaps",
 ]
@@ -110,6 +91,7 @@ MIDDLEWARE: list[str] = [
 ]
 
 ROOT_URLCONF = "mysite.urls"
+AUTH_USER_MODEL = "custom_user.User"
 
 TEMPLATES = [
     {
@@ -134,18 +116,48 @@ WSGI_APPLICATION = "mysite.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 
+# Database configuration
+# database_url = os.getenv("DATABASE_URL_OPTION")
+database_url = config.database_url
+
+print(f"[SETTINGS] DATABASE_URL : {os.getenv("DATABASE_URL_OPTION")}")
 DATABASES = {
-    'default': {
-        "ENGINE": config.database_engine,
-        "NAME": config.pgdatabase,
-        "USER": config.pguser,
-        "PASSWORD": config.pgpassword,
-        "HOST": config.pghost,
-        "PORT": config.database_port,
-    }
+    "default": dj_database_url.parse(
+        database_url,
+        conn_max_age=600,
+        ssl_require=True,
+    )
+}
+
+# Backend configuration
+
+# STATIC_URL = STATIC_HOST + "/static/"
+STATIC_URL = '/static/'
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+    BASE_DIR / "website/static/website",
+]
+
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+DEFAULT_FILE_STORAGE = "mysite.storage_backend.blob_storage.VercelBlobStore"
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedStaticFilesStorage'
+
+
+STORAGES: dict[str, dict[str, str]] = {
+    "default": {
+        "BACKEND": DEFAULT_FILE_STORAGE,
+    },
+    "media": {
+        "BACKEND": DEFAULT_FILE_STORAGE,
+    },
+    "staticfiles": {
+        "BACKEND": STATICFILES_STORAGE,
+    },
 }
 
 
+# print("ENVIRONMENT:", os.getenv("ENVIRONMENT"))
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators
@@ -165,8 +177,6 @@ AUTH_PASSWORD_VALIDATORS: list[dict[str, str]] = [
     },
 ]
 
-AUTH_USER_MODEL = "custom_user.User"
-WAGTAILDOCS_DOCUMENT_MODEL = 'custom_media.CustomDocument'
 
 
 
@@ -181,7 +191,6 @@ USE_I18N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
@@ -190,34 +199,26 @@ STATICFILES_FINDERS: list[str] = [
     "django.contrib.staticfiles.finders.AppDirectoriesFinder",
 ]
 
-
-STATIC_URL = "static/"
-STATIC_ROOT: str = os.path.join(BASE_DIR, "staticfiles")
+# STATIC_HOST = "vercel-django-integration-jonz9ypl8-leolchalots-projects.vercel.app" if not DEBUG else ""
 
 
 # Répertoire temporaire pour les fichiers
 TEMP_DIR = "/tmp"
 
 # Fichiers médias
-MEDIA_ROOT = TEMP_DIR
-MEDIA_URL = "/media/"
-
+# MEDIA_ROOT = TEMP_DIR
+MEDIA_URL = "https://gqb3dhg6ajkwelj6.public.blob.vercel-storage.com/original_images/"
 
 # Login
 
 LOGIN_URL = "wagtailadmin_login"
 LOGIN_REDIRECT_URL = "wagtailadmin_home"
 
-
 # Wagtail settings
 
 WAGTAIL_SITE_NAME = "SafeBear"
 
 WAGTAIL_ENABLE_UPDATE_CHECK = False
-
-WAGTAILIMAGES_IMAGE_MODEL = "custom_media.CustomImage"
-
-WAGTAILDOCS_DOCUMENT_MODEL = "custom_media.CustomDocument"
 
 WAGTAILIMAGES_EXTENSIONS: list[str] = [
     "gif",
@@ -233,21 +234,15 @@ WAGTAILIMAGES_EXTENSIONS: list[str] = [
 # WAGTAILADMIN_BASE_URL = "http://localhost"
 WAGTAILADMIN_BASE_URL = "https://vercel-django-integration.vercel.app"
 
-
 # Tags
-
 TAGGIT_CASE_INSENSITIVE = True
-
 
 # Sets default for primary key IDs
 # See https://docs.djangoproject.com/en/5.1/ref/models/fields/#bigautofield
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
 
 # Disable built-in CRX Navbar and Footer since this project has a
 # custom implementation.
 CRX_DISABLE_NAVBAR = True
 CRX_DISABLE_FOOTER = True
 
-WAGTAILIMAGES_IMAGE_MODEL = 'custom_media.CustomImage'
-FILE_UPLOAD_MAX_MEMORY_SIZE = 5242880  # Limite de 5 Mo

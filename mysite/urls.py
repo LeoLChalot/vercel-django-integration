@@ -7,7 +7,7 @@ from django.urls import include
 from django.urls import path
 from django.urls.resolvers import URLResolver
 from wagtail.documents import urls as wagtaildocs_urls
-
+from django.conf.urls.static import static
 
 urlpatterns: list[URLResolver] = [
     # Admin
