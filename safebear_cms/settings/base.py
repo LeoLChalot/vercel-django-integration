@@ -37,7 +37,7 @@ print(ALLOWED_HOSTS)
 
 INSTALLED_APPS: list[str] = [
     # This project
-    "blog",
+    "safebear_cms",
     # Wagtail CRX (CodeRed Extensions)
     "coderedcms",
     "django_bootstrap5",
@@ -89,7 +89,7 @@ MIDDLEWARE: list[str] = [
     "wagtailcache.cache.FetchFromCacheMiddleware",
 ]
 
-ROOT_URLCONF = "safebear_cms.urls"
+ROOT_URLCONF = "urls"
 
 TEMPLATES = [
     {
@@ -107,7 +107,7 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "safebear_cms.wsgi.application"
+WSGI_APPLICATION = "wsgi.application"
 
 
 # Database
